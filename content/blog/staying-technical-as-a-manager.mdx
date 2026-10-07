@@ -1,0 +1,93 @@
+---
+title: 'Staying technical as a manager'
+description: 'Two ways to get this wrong, and the split that worked for me: stay close to the decisions that underwrite your judgement, hand off the execution.'
+date: '2026-10-06'
+authors:
+  - swatiswa
+---
+
+There is a version of engineering management where you stop writing code, and the
+titles get more senior while your hands get further from the work. There is another
+version where you keep taking tickets, and you become the reason nothing ships when
+you are on leave. I have watched both go badly, and I have been closer to the second
+than I would like.
+
+When I managed a team at BYJU'S, I also set up and ran our AWS infrastructure —
+instances, storage, access control, networking. On paper that is a strange thing for
+an engineering manager to be doing. I think it was the right call, but not for the
+reason I would have given at the time.
+
+## The case against picking up the work
+
+The objections are real and I do not want to wave them away:
+
+- **You become a bottleneck.** Work waits on you specifically, which is the opposite
+  of what a manager is for.
+- **You lose the plot.** Context-switching between a debugging session and a
+  one-on-one about someone's career serves neither.
+- **You take the interesting work.** If the manager absorbs every architectural
+  problem, the senior engineers do not get the reps they need to grow into the next
+  level. This one is the most damaging and the easiest to do without noticing.
+
+## The case for staying close enough to judge
+
+The counter-argument is not "managers should code". It is that a manager who cannot
+evaluate technical work is managing on vibes, and the people doing the work can tell
+within about two weeks.
+
+That manifests in specific, expensive ways. You approve an estimate you cannot
+interrogate. You accept a design because it is described confidently. You cannot tell
+the difference between an engineer who is stuck and an engineer who is being
+thorough. You end up relying on whoever speaks most fluently, which is a selection
+pressure you did not intend to apply.
+
+Infrastructure was where I chose to stay close, because the decisions there are
+mostly *judgement* decisions rather than *typing* decisions. How do you segment the
+network? Who can assume which role? What is the blast radius when a key leaks? Those
+are the questions that decide whether an incident is a bad afternoon or a bad quarter,
+and they are exactly the questions a manager should be able to argue about.
+
+## The split that worked
+
+The line I landed on:
+
+- **Stay in the decisions that underwrite your judgement.** Architecture, cost,
+  security posture, the shape of a data model, the risk of a dependency. You need
+  enough fluency to disagree with a confident engineer, and that is a different bar
+  from being the one who implements.
+- **Hand off the execution, deliberately.** If you are the only one who can do a
+  thing, that is a bus-factor problem with your name on it, and it is yours to fix.
+- **Never take the interesting problem by default.** Choose what you keep, say why,
+  and let someone else take the rest on purpose rather than by attrition.
+
+<Callout>
+  The question is not "should a manager write code". It is "which decisions must I be
+  able to argue about, and am I still fluent enough in those to argue about them
+  honestly".
+</Callout>
+
+## One-on-ones are the unit of management
+
+The other half of this is that the time you buy by not being in the code has to go
+somewhere useful. For me that is one-on-ones, which are the only recurring mechanism
+that reliably surfaces a problem before it becomes a resignation.
+
+The things that made them work were unglamorous: keeping them at a fixed time so they
+are not a signal, letting the other person set the agenda, writing down what was
+agreed and following up on it, and not turning them into status updates. A one-on-one
+where the manager does most of the talking is a stand-up with worse acoustics.
+
+## OKRs, carefully
+
+I have also seen OKRs do real damage — a set of key results invented in a workshop and
+then ignored until the quarter ends, or worse, pursued after they stopped mattering.
+The version that helps is smaller: a few outcomes that the team genuinely believes in,
+revisited often enough that changing one is not an admission of failure.
+
+## The compounding part
+
+The thread running through my career that I would keep, if I could keep only one
+thing, is mentoring — from the associates I worked with early on, to the engineers I
+grew as a lead, to the people I manage now. It is slow, it does not show up in a
+sprint, and it is the only thing I have done that makes the team better after I leave
+it. Everything else is a delivery. That is a capability.

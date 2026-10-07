@@ -1,0 +1,102 @@
+---
+title: 'Ten payment gateways, one checkout'
+description: 'What a lending platform taught me about adapters, error taxonomies and the ₹1 transfer that validates a bank account.'
+date: '2026-09-25'
+authors:
+  - swatiswa
+---
+
+On a lending platform, the interesting engineering is never the screen the customer
+sees. The checkout is a button. Everything hard is underneath it, and most of it is
+somebody else's API behaving in a way nobody documented.
+
+Over a couple of years I integrated payment and lending partners including Paytm,
+PayU, Bajaj, Pine Labs, Kotak, ICICI, Zest, Avanse, IIFL and RBL, alongside PAN India
+APIs, credit bureau checks through TransUnion CIBIL, and penny drop for validating
+customer bank accounts. Ten integrations is enough to see the pattern, and the
+pattern is that there is no pattern.
+
+## Every gateway is a different shape
+
+The mistake I made early was looking for the common denominator. There isn't one,
+and hunting for it produces an abstraction with a hole in the middle where each
+gateway's real behaviour should be.
+
+<Callout>
+  Ten payment partners differ on authentication, on whether the outcome arrives by
+  callback or by polling, on how they name a refund, on whether amounts are paise or
+  rupees or a string, on how long a session stays valid, and on what "failed" means.
+  Design for that difference rather than trying to dissolve it.
+</Callout>
+
+| What differs | Why it hurts |
+| --- | --- |
+| Status vocabulary | One gateway's `PENDING` is another's "we never received it". Mapping these onto a shared enum loses the distinction you need at 2am. |
+| Completion signal | Callback, redirect, or poll. Each needs a different recovery path when the customer closes the tab. |
+| Amount representation | Paise as integer, rupees as decimal, rupees as string. Exactly one of these rounds badly. |
+| Error taxonomy | An insufficient-funds failure is a retry-later problem. An invalid-account failure is a support-call problem. Both arrive as a numeric code that means something different at every partner. |
+
+## Keep their words out of your domain
+
+The rule that saved the most pain was the simplest one: no partner's status string,
+error code or identifier should ever reach our own domain model. Each partner gets an
+adapter that translates in both directions, and the core only ever sees our
+vocabulary.
+
+```ts
+// The core knows about Payment, not about any particular gateway.
+interface PaymentGateway {
+  authorize(request: PaymentRequest): Promise<AuthResult>
+  capture(id: GatewayRef): Promise<CaptureResult>
+  refund(id: GatewayRef, amount: Money): Promise<RefundResult>
+  // Their transport, their auth, their codes — all in here, none of it out there.
+}
+```
+
+It is more code than calling the SDK directly, and it is the only reason supporting
+the tenth partner was a week's work rather than a quarter's.
+
+## The parts nobody puts on the roadmap
+
+**Idempotency.** A customer double-taps a payment button, or a callback is delivered
+twice, or a retry succeeds after a timeout that was not actually a failure. Without an
+idempotency key of your own, each of these is a duplicate payment.
+
+**Reconciliation.** Somebody must compare what your database believes happened with
+what the partner's settlement file says happened, and it must run even on the days
+nothing appears to have gone wrong. Reconciliation written after the first incident
+is written in a hurry.
+
+**Sandboxes that lie.** Test environments accept amounts that production rejects,
+approve accounts that do not exist, and time out differently. A flow that passes in
+sandbox is evidence about your code, not about their system.
+
+## Penny drop: clever, and sharp
+
+Penny drop validates a bank account by transferring one rupee into it and reading the
+account holder's name back from the response. It is a genuinely clever use of the
+payment rails as an identity check, and it is the reason you can onboard a borrower
+without a cancelled cheque.
+
+It also has edges that are easy to miss. The name that comes back is whatever the bank
+holds, which is frequently not the name the customer typed — initials, honorifics,
+joint accounts and transliteration between scripts all produce mismatches that are
+not fraud. It costs money per attempt, it is not instant, and the account can be
+valid. The design decision is what you do with a partial match, and that is a
+business decision you should push upward rather than settle in the code.
+
+## Credit checks are not free
+
+A CIBIL pull through TransUnion is billable, rate-limited and, in the customer's eyes,
+a thing you did to them. Running one on every form submission is an expensive habit.
+The engineering work here is mostly about not doing things: caching a recent report,
+checking eligibility rules before spending a bureau call, and making sure a retry
+after a timeout does not silently become a second pull.
+
+## What I would do first, next time
+
+Model payments as your own domain with adapters at the edges, build the idempotency
+key before the first integration rather than after the first duplicate, and treat the
+reconciliation report as a feature with a place on the roadmap. None of it is
+glamorous. All of it is what stands between a working demo and a system that a finance
+team is willing to trust.

@@ -24,3 +24,196 @@
 html {
   min-width: 360px;
 }
+
+/**
+ * Dark band — the homepage, which is dark from the top of the navbar to the footer.
+ *
+ * The band is hardcoded dark rather than driven by a theme variant. Tailwind is configured
+ * `darkMode: 'class'`, but next-themes' default attribute is `data-theme` and no `.dark`
+ * class is ever written, so every `dark:` utility on this site is currently inert. Relying
+ * on one here would silently render the band light.
+ *
+ * Tokens live on `:root` rather than on `.dark-band` because the navbar is rendered by the
+ * layout and is therefore NOT a descendant of the band — it needs to read these values too,
+ * to join the same surface (see the `:has()` rule below). Declaring them here only publishes
+ * the values; `.dark-band` is still what applies the surface.
+ *
+ * `.dark-band` paints a *block*, wherever that block sits. `.band-page` (see the navbar rule
+ * below) marks a *route* as dark top to bottom. The two are separate questions — the footer
+ * is always a dark block, on light pages included.
+ */
+:root {
+  --band-bg: #0b0b0c;
+  --band-fg: #ededef;
+  --band-muted: #8a8a93;
+  --band-line: rgba(237, 237, 239, 0.14);
+  --band-line-strong: rgba(237, 237, 239, 0.32);
+  --band-accent: #f472b6;
+  /* A surface a shade off the band, for blocks that need to sit *on* the page rather than in
+     it — the blog's code blocks, table stripes and inline code. Lifting the surface with a
+     translucent white rather than a second hardcoded near-black keeps it correct wherever the
+     band is painted, and keeps it behind the text in the stacking order. */
+  --band-panel: rgba(237, 237, 239, 0.06);
+}
+
+.dark-band {
+  background-color: var(--band-bg);
+  color: var(--band-fg);
+}
+
+/**
+ * Full-bleed breakout: stretches an element to the viewport edges from inside body's
+ * `max-w-5xl`. The hero band, the homepage's lower band, and the navbar all use it so their
+ * backgrounds meet edge-to-edge and read as one surface.
+ *
+ * Negative margins rather than `w-screen` + translate, because a transformed ancestor becomes
+ * the containing block for its `position: fixed`/`sticky` descendants — which would break the
+ * hero's sticky stage. Safe against horizontal overflow because `<html>` is `overflow-x: clip`.
+ */
+.bleed-x {
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+/**
+ * The navbar joins the band when the *page* is dark, so the homepage opens as a single dark
+ * field instead of a white strip sitting on top of a dark hero. Keyed on `:has()` rather than
+ * a route hook so the navbar itself stays a Server Component — the presence of the band IS
+ * the condition.
+ *
+ * This deliberately keys on `.band-page`, not `.dark-band`. The footer is always a dark
+ * block, so keying on `.dark-band` would have flipped every light route's navbar the moment
+ * the footer was added. `.band-page` marks the routes that are dark top to bottom.
+ */
+.nav-chrome {
+  background-color: transparent;
+}
+
+body:has(.band-page) .nav-chrome {
+  background-color: var(--band-bg);
+  color: var(--band-fg);
+}
+
+/**
+ * `.bleed-x` stretches an element horizontally only, so a dark page shorter than the viewport
+ * would still show the white canvas beneath it. Painting the body closes that gap for every
+ * dark route at once, rather than making each page guess at a minimum height.
+ */
+body:has(.band-page) {
+  background-color: var(--band-bg);
+}
+
+/**
+ * Hero portrait.
+ *
+ * `--px` / `--py` are the pointer offset in [-1, 1], written from the component's rAF loop.
+ * They are declared here so the transform has a value to read before the first move — and,
+ * more importantly, so that reduced motion (which never runs the loop) gets the resting
+ * transform for free rather than a stale one.
+ */
+.hero-stage {
+  --px: 0;
+  --py: 0;
+
+  /* Clips the parallax. Without this the 1.05 scale and the translation would spill past the
+     frame. It is the padding box that clips, so the hairline below stays visible. */
+  overflow: hidden;
+  border: 1px solid var(--band-line);
+}
+
+/* Only the transform is animated, and only the shared container carries it — a per-layer
+   transform would slide one frame out of register with the other four. The base scale closes
+   the gap that the translation would otherwise open at the edges. */
+.hero-parallax {
+  transform: translate3d(calc(var(--px) * 10px), calc(var(--py) * 12px), 0)
+    scale(1.05);
+}
+
+/* The crossfade. The global reduced-motion clamp above collapses this to an instant swap,
+   which is exactly the required behaviour — so no JS branch is needed for it. */
+.hero-stage img {
+  transition: opacity 200ms ease-out;
+  will-change: opacity;
+}
+
+.hero-grid {
+  background-image: radial-gradient(var(--band-line) 1px, transparent 1px);
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(
+    62% 58% at 50% 45%,
+    #000 0%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(62% 58% at 50% 45%, #000 0%, transparent 100%);
+}
+
+.hero-rule {
+  animation: hero-drift 9s ease-in-out infinite alternate;
+}
+
+@keyframes hero-drift {
+  from {
+    transform: translateY(-8px);
+    opacity: 0.45;
+  }
+  to {
+    transform: translateY(8px);
+    opacity: 0.9;
+  }
+}
+
+/**
+ * Career rail — the spine down /work.
+ *
+ * A role list is genuinely a sequence, so it gets a line drawn through it: the hairline runs
+ * down the left of every entry and a node marks where each role starts. The border lives on
+ * the entry rather than on the `<ol>` so consecutive entries butt together and the line reads
+ * as one unbroken 2014 → present, instead of the stack of separate rules it replaced.
+ *
+ * `--current` is the only place the accent appears on this page — a filled node at the head
+ * of the timeline, so "where is she now" is answerable without reading a date.
+ */
+.career-entry {
+  position: relative;
+  border-left: 1px solid var(--band-line);
+  padding-left: 1.5rem;
+}
+
+/* 7px node centred on the 1px border, and dropped onto the first line of the date column
+   (text-sm, so a 1.5rem line box puts its centre at 0.75rem). */
+.career-entry::before {
+  content: '';
+  position: absolute;
+  top: 0.55rem;
+  left: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background-color: var(--band-bg);
+  border: 1px solid var(--band-line-strong);
+}
+
+.career-entry--current::before {
+  background-color: var(--band-accent);
+  border-color: var(--band-accent);
+}
+
+.dark-band ::selection {
+  background-color: var(--band-accent);
+  color: var(--band-bg);
+}
+
+/**
+ * Belt-and-braces for reduced motion. The hero's own GSAP matchMedia branch snaps to the
+ * composed state; this covers anything that ever animates via CSS.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
