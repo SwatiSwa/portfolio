@@ -213,9 +213,16 @@ interface MdxProps {
  * point this would be a second dependency upgrade riding along with a build fix. Call it as
  * `{await renderMdx(post.body)}` from a server component.
  *
- * The remark/rehype chain moved here from the retired `contentlayer.config.js`, unchanged.
- * `rehype-pretty-code` keeps the same `github-dark` theme and the same three hooks, which are
- * not decorative: post1.mdx is mostly fenced code, GFM tables and autolinked headings.
+ * The remark/rehype chain came here from the retired `contentlayer.config.js` with the same
+ * `github-dark` theme and the same three hooks, which are not decorative: post1.mdx is mostly
+ * fenced code, GFM tables and autolinked headings.
+ *
+ * The plugins were then bumped a major each — remark-gfm 3→4, rehype-slug 5→6,
+ * rehype-autolink-headings 6→7, rehype-pretty-code 0.9→0.14 — to move them onto unified 11
+ * alongside next-mdx-remote 6. It is not optional: next-mdx-remote below 6.0.0 carries
+ * GHSA-g4xw-jxrg-5f6m, arbitrary code execution while server-rendering untrusted MDX, and
+ * Vercel refuses to deploy a build that pulls it in. The one API break that reached this file
+ * is the hook rename below.
  */
 export async function renderMdx(source: string) {
   const { content } = await compileMDX({
@@ -234,6 +241,13 @@ export async function renderMdx(source: string) {
             rehypePrettyCode,
             {
               theme: 'github-dark',
+              /*
+               * Without this, shiki paints its own `#24292e` onto the `<pre>` as an inline style,
+               * which beats the `bg-[var(--band-panel)]` class above and puts the block back on
+               * github's grey instead of the band's token. rehype-pretty-code 0.9 left the
+               * background alone; 0.14 keeps it unless told not to.
+               */
+              keepBackground: false,
               onVisitLine(node) {
                 // Prevent lines from collapsing in `display: grid` mode, and allow empty
                 // lines to be copy/pasted
@@ -244,7 +258,8 @@ export async function renderMdx(source: string) {
               onVisitHighlightedLine(node) {
                 node.properties.className.push('line--highlighted')
               },
-              onVisitHighlightedWord(node) {
+              // `onVisitHighlightedWord` before rehype-pretty-code 0.14; same hook, renamed.
+              onVisitHighlightedChars(node) {
                 node.properties.className = ['word--highlighted']
               },
             },
