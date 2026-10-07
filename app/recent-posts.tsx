@@ -13,8 +13,8 @@ export default function RecentPosts() {
 
   return (
     <section className="my-10">
-      <h1 className="text-2xl font-semibold">Recent Posts</h1>
-      <p className="text-gray-600">
+      <h2 className="text-2xl font-semibold">Recent Posts</h2>
+      <p className="text-[var(--band-muted)]">
         Dive into My Adventures: A Collection of Explorations and Discoveries..
       </p>
       <div className="mt-5">
@@ -23,14 +23,14 @@ export default function RecentPosts() {
             {recentPosts.map((post) => (
               <article
                 key={post._id}
-                className="group relative flex flex-col space-y-2 border border-gray-300 p-4"
+                className="group relative flex flex-col space-y-2 border border-[var(--band-line)] p-4"
               >
                 <h2 className="text-2xl font-extrabold">{post.title}</h2>
                 {post.description && (
-                  <p className="text-muted-foreground">{post.description}</p>
+                  <p className="text-[var(--band-muted)]">{post.description}</p>
                 )}
                 {post.date && (
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-sm text-[var(--band-muted)]">
                     {formatDate(post.date)}
                   </p>
                 )}

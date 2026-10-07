@@ -1,4 +1,9 @@
-export function TwitterIcon() {
+/**
+ * Every icon here is decorative or sits inside a link that supplies its own accessible name,
+ * so each is hidden from the accessibility tree and accepts a `className` for sizing. Icons
+ * are drawn in `currentColor`, so they follow the text colour of whatever surface holds them.
+ */
+export function TwitterIcon(props) {
   return (
     <svg
       width="20"
@@ -6,6 +11,9 @@ export function TwitterIcon() {
       viewBox="0 0 24 20"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+      {...props}
     >
       <g clipPath="url(#a)">
         <path
@@ -22,7 +30,7 @@ export function TwitterIcon() {
   )
 }
 
-export function GitHubIcon() {
+export function GitHubIcon(props) {
   return (
     <svg
       width="20"
@@ -30,6 +38,9 @@ export function GitHubIcon() {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+      {...props}
     >
       <g clipPath="url(#clip0_9914_10)">
         <path
@@ -76,6 +87,8 @@ export function ArrowIcon() {
       viewBox="0 0 12 12"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
     >
       <path
         d="M2.07102 11.3494L0.963068 10.2415L9.2017 1.98864H2.83807L2.85227 0.454545H11.8438V9.46023H10.2955L10.3097 3.09659L2.07102 11.3494Z"
@@ -85,7 +98,7 @@ export function ArrowIcon() {
   )
 }
 
-export function YoutubeIcon() {
+export function YoutubeIcon(props) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -93,6 +106,9 @@ export function YoutubeIcon() {
       height="16"
       viewBox="0 0 21 16"
       fill="none"
+      aria-hidden="true"
+      focusable="false"
+      {...props}
     >
       <path
         d="M11.2879 14.8747L7.22568 14.7988C5.91044 14.7723 4.59191 14.8251 3.30246 14.551C1.34089 14.1415 1.20193 12.1336 1.05651 10.4494C0.856153 8.08155 0.933719 5.67074 1.31183 3.32266C1.52528 2.00514 2.36532 1.21897 3.6644 1.13342C8.04975 0.822948 12.4643 0.859743 16.8399 1.00459C17.302 1.01787 17.7673 1.09044 18.223 1.17306C20.4723 1.57597 20.5271 3.85137 20.673 5.76683C20.8184 7.70205 20.757 9.64721 20.479 11.5693C20.2561 13.1607 19.8295 14.4952 18.0291 14.624C15.7733 14.7925 13.5693 14.9281 11.3072 14.8849C11.3073 14.8747 11.2943 14.8747 11.2879 14.8747ZM8.8997 10.8457C10.5996 9.84831 12.2671 8.86752 13.9573 7.8768C12.2542 6.87939 10.5899 5.8986 8.8997 4.90788V10.8457Z"

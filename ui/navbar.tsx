@@ -1,29 +1,22 @@
-import React from 'react'
 import Link from 'next/link'
+
+import NavLinks from './nav-links'
 
 export default function Navbar() {
   return (
-    <nav className="mx-auto max-w-5xl">
-      <div className="flex justify-between py-10">
-        <div className="text-base font-semibold uppercase tracking-wider text-pink-400">
-          {/*<Image
-          src={SwatiLogo}
-          className="h-24 w-24 object-contain"
-          alt="Swati"
-        />*/}
-          <Link href="/">Swati</Link>
+    // Full-width so the background can bleed to the viewport edges; the inner div keeps the
+    // contents on the same `max-w-5xl` rail as the rest of the site. `nav-chrome` supplies no
+    // background by default — it only joins the dark band on pages that have one.
+    <nav className="nav-chrome bleed-x">
+      {/* `px-6` matches the padding every page applies inside its own `max-w-5xl`, so the
+          wordmark lines up with the content beneath it instead of sitting 24px to its left. */}
+      <div className="mx-auto max-w-5xl px-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3 py-8 sm:py-10">
+          <div className="text-base font-semibold uppercase tracking-wider text-pink-400">
+            <Link href="/">Swati</Link>
+          </div>
+          <NavLinks />
         </div>
-        <ul className="flex flex-row space-x-10">
-          <li className="cursor-pointer text-sm font-medium uppercase tracking-wider">
-            <Link href="/blog">Blog</Link>
-          </li>
-          <li className="cursor-pointer text-sm font-medium uppercase tracking-wider">
-            <Link href="/about">About</Link>
-          </li>
-          <li className="cursor-pointer text-sm font-medium uppercase tracking-wider">
-            Guestbook
-          </li>
-        </ul>
       </div>
     </nav>
   )
