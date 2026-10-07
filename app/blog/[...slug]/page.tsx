@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation'
-import { allAuthors, allPosts } from 'contentlayer/generated'
 import Link from 'next/link'
 import { ArrowIcon } from 'ui/icons'
 import Image from 'next/image'
-import { Mdx } from '@/ui/mdx-components'
 import { Metadata } from 'next'
+import { allAuthors, allPosts } from '@/lib/content'
+import { renderMdx } from '@/ui/mdx-components'
 import { absoluteUrl, formatDate } from '@/lib/utils'
 
 interface PostPageProps {
@@ -13,12 +13,29 @@ interface PostPageProps {
   }
 }
 
+/*
+ * Every post is known at build time, so the blog prerenders rather than rendering on demand.
+ * That matters beyond speed: the body reaches this route through `lib/content.ts`, which
+ * resolves `content/` from `process.cwd()`. At request time on Vercel that is `/var/task`, where
+ * those files are present only if the build traced them — so an on-demand render risks a 500 on
+ * every post while `next start` on a laptop passes happily. Prerendering removes the question.
+ */
+export function generateStaticParams() {
+  // `slugAsParams` is the bare segment (`post1`); the catch-all wants it split back into an
+  // array, so a nested post would arrive as `['2023', 'post1']`.
+  return allPosts.map((post) => ({ slug: post.slugAsParams.split('/') }))
+}
+
+// The other half of the above: an unknown slug 404s instead of falling through to an on-demand
+// render that would do the untraced read.
+export const dynamicParams = false
+
 async function getPostFromParams(params) {
   const slug = params?.slug?.join('/')
   const post = allPosts.find((post) => post.slugAsParams === slug)
 
   if (!post) {
-    null
+    return null
   }
 
   return post
@@ -146,7 +163,7 @@ export default async function PostPage({ params }: PostPageProps) {
               priority
             />
           )}
-          <Mdx code={post.body.code} />
+          {await renderMdx(post.body)}
           <hr className="mt-12 border-[var(--band-line)]" />
           <div className="flex justify-center py-6 lg:py-10">
             <Link

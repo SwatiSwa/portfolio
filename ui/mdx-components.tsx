@@ -1,6 +1,10 @@
 import * as React from 'react'
 import Image from 'next/image'
-import { useMDXComponent } from 'next-contentlayer/hooks'
+import { compileMDX } from 'next-mdx-remote/rsc'
+import rehypeAutolinkHeadings from 'rehype-autolink-headings'
+import rehypePrettyCode from 'rehype-pretty-code'
+import rehypeSlug from 'rehype-slug'
+import remarkGfm from 'remark-gfm'
 
 import { cn } from '@/lib/utils'
 import { Callout } from '@/ui/callout'
@@ -13,6 +17,10 @@ import { MdxCard } from '@/ui/mdx-card'
  *
  * Headings take `font-display` so the body's section headings match the page's h1 and the rest
  * of the site, rather than falling back to the body face.
+ *
+ * Every key here is load-bearing. post1.mdx uses `<Callout>` and `<Image>`, and the lowercase
+ * overrides are what keep a `.mdx` table or fenced block on the band instead of on Tailwind's
+ * light defaults.
  */
 const components = {
   h1: ({ className, ...props }) => (
@@ -192,15 +200,68 @@ const components = {
 }
 
 interface MdxProps {
-  code: string
+  source: string
 }
 
-export function Mdx({ code }: MdxProps) {
-  const Component = useMDXComponent(code)
+/**
+ * Renders an article body to React nodes.
+ *
+ * A plain async function rather than an async component, even though `<Mdx source={…} />`
+ * would read better: compiling MDX is asynchronous, and this repo is on TypeScript 4.9, which
+ * types an async component's return as `Promise<Element>` and refuses to accept that in JSX
+ * position. TypeScript only learned to allow it (5.1, with matching `@types/react`) by which
+ * point this would be a second dependency upgrade riding along with a build fix. Call it as
+ * `{await renderMdx(post.body)}` from a server component.
+ *
+ * The remark/rehype chain moved here from the retired `contentlayer.config.js`, unchanged.
+ * `rehype-pretty-code` keeps the same `github-dark` theme and the same three hooks, which are
+ * not decorative: post1.mdx is mostly fenced code, GFM tables and autolinked headings.
+ */
+export async function renderMdx(source: string) {
+  const { content } = await compileMDX({
+    source,
+    components,
+    options: {
+      // Frontmatter is already parsed by `lib/content.ts`. Leaving this on would try to parse
+      // the body, find no `---` block, and be harmless — but it is also what would render one
+      // as literal text if the source ever does carry it.
+      parseFrontmatter: false,
+      mdxOptions: {
+        remarkPlugins: [remarkGfm],
+        rehypePlugins: [
+          rehypeSlug,
+          [
+            rehypePrettyCode,
+            {
+              theme: 'github-dark',
+              onVisitLine(node) {
+                // Prevent lines from collapsing in `display: grid` mode, and allow empty
+                // lines to be copy/pasted
+                if (node.children.length === 0) {
+                  node.children = [{ type: 'text', value: ' ' }]
+                }
+              },
+              onVisitHighlightedLine(node) {
+                node.properties.className.push('line--highlighted')
+              },
+              onVisitHighlightedWord(node) {
+                node.properties.className = ['word--highlighted']
+              },
+            },
+          ],
+          [
+            rehypeAutolinkHeadings,
+            {
+              properties: {
+                className: ['subheading-anchor'],
+                ariaLabel: 'Link to section',
+              },
+            },
+          ],
+        ],
+      },
+    },
+  })
 
-  return (
-    <div className="mdx">
-      <Component components={components} />
-    </div>
-  )
+  return <div className="mdx">{content}</div>
 }

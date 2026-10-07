@@ -44,5 +44,3 @@ __pycache__/
 # source masters for generated assets — kept locally, never shipped. Regenerate with
 # `node scripts/optimize-hero-images.mjs` (see public/images/hero).
 /.assets/
-
-.contentlayer

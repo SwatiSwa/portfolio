@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { allPosts } from 'contentlayer/generated'
 import { compareDesc } from 'date-fns'
+import { allPosts } from '@/lib/content'
 import { formatDate } from '@/lib/utils'
 
 export default function RecentPosts() {
