@@ -1,0 +1,103 @@
+---
+title: 'Rewriting a legacy UI: TIBCO GI to ExtJS'
+description: 'Why "the framework is dead" wins an argument that "the code is ugly" loses, and the four components that carried the migration.'
+date: '2026-09-14'
+authors:
+  - swatiswa
+---
+
+Every rewrite proposal I have watched fail has failed the same way. It argued about
+code. The code is ugly. The framework is old. There are no tests. None of that is a
+business problem, and the people who approve budgets do not fund aesthetic
+complaints.
+
+The first rewrite I drove was a media-analytics application built on TIBCO GI — an
+AJAX-era toolkit for building rich browser interfaces, from the period before any of
+the frameworks we argue about today had settled. It worked. It had worked for years,
+and it kept working while we replaced it, which turned out to be the most important
+property of the whole project.
+
+## The argument that actually landed
+
+The case for moving to Sencha ExtJS was not that GI was unpleasant. It was that GI
+had become a hiring and maintenance constraint with a compounding cost:
+
+- **We could not hire for it.** Every new engineer spent their first weeks learning a
+  toolkit that exists nowhere else in their career, and nothing they learned
+  transferred to the next project.
+- **We could not upgrade it.** Fixes we needed had to be worked around rather than
+  fixed, and each workaround became permanent.
+- **The vendor relationship had gone quiet.** A toolkit is not just code; it is the
+  people who know its internals. When that thread goes slack, every hard problem
+  becomes yours alone.
+
+That last point is the one that convinced people, because it is a risk statement
+rather than a taste statement. "We are one person's memory away from being unable to
+ship" is a sentence a director can act on.
+
+I did not have to make this argument alone, either. We brought the ExtJS vendor's own
+engineers into the design of the base layout and the component set, and worked with
+the client's architects on how the new code would be packaged, how events would flow,
+and where module boundaries would sit. A rewrite you cannot explain to the architects
+who own the surrounding systems is a rewrite that will be reversed.
+
+<Callout>
+  If you are trying to justify a rewrite, stop describing the old code and start
+  describing the constraint it puts on hiring, on release cadence, and on the number
+  of people who can safely change it.
+</Callout>
+
+## Four components carried it
+
+A rewrite is not a translation. Copying the old screens one-for-one into a new
+framework produces the same application with a newer dependency, and the same
+problems waiting a few years out. What made the migration worth doing was building a
+small set of primitives first, and then expressing the application in terms of them.
+
+| Component | Why it had to exist |
+| --- | --- |
+| `Grid` | Nearly every screen was a table over a large result set. Sorting, paging, selection and column configuration were being reimplemented per screen. |
+| `QueryBuilder` | Users composed filters themselves. The old builder was duplicated in three variants that had drifted. |
+| `Enumeration` | Dropdowns backed by server-defined code lists, with caching and labels that changed without a deploy. |
+| `Form` | Layout, validation and error presentation, so validation lived in one place instead of on every screen. |
+
+The order matters. `Grid` came first because it was the most-used and therefore
+immediately paid for itself, which bought the credibility to keep going. If the first
+component you extract is one only three screens use, you will be arguing about the
+approach by month two.
+
+## Decoupling the events
+
+The riskiest part of the migration had nothing to do with components. The old
+application communicated through a shared event bus that had become a place where
+everything knew about everything, and the easiest way to port a screen was to keep
+firing the same events into it. That would have moved the coupling intact.
+
+Instead the module boundaries were drawn deliberately: components published
+intentions rather than instructions, and subscribers did not reach back into the
+emitter. It is a slower way to port a screen and the only way to port the hundredth
+one.
+
+## The unglamorous half
+
+Two things I would not have predicted mattered as much as the code:
+
+**Packaging.** Working out how the new application would be assembled, versioned and
+delivered into non-production and production environments took as much coordination
+as the UI work. Automating the build for both environments was not a nice-to-have; it
+was what let us ship the new UI alongside the old one instead of cutting over in a
+weekend.
+
+**Mentoring.** A rewrite is a knowledge transfer whether you plan for it or not. The
+associates who joined during that period were learning ExtJS and, more importantly,
+learning the component contracts and why they existed. Every one of those
+conversations was cheaper than the bug it prevented.
+
+## What I would tell you now
+
+A rewrite is justified when the old system's *constraints* have become more expensive
+than the rewrite. It is not justified because the code is embarrassing. And the way
+you keep it from being reversed is to ship the old system and the new one side by
+side for as long as it takes for the new one to earn trust — which means the boring
+work, the build automation and the packaging, is not the boring work. It is the
+project.
